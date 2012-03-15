@@ -1,149 +1,174 @@
 // Copyright 2012 Karl Skomski MIT
 
-#include <snappy.h>
-#include <node_buffer.h>
+#include <node.h>
+#include <node_version.h>
+#include <archive.h>
+#include <archive_entry.h>
+#include <iostream>
 
-namespace nodesnappy {
+#if NODE_VERSION_AT_LEAST(0, 5, 6)
+  #define BEGIN_ASYNC(_data, async, after) \
+    uv_work_t *_req = new uv_work_t; \
+    _req->data = _data; \
+    uv_queue_work(uv_default_loop(), _req, async, after);
+  typedef void async_rtn;
+  #define RETURN_ASYNC return;
+  #define RETURN_ASYNC_AFTER delete job;
+#else
+  #define BEGIN_ASYNC(data, async, after) \
+    ev_ref(EV_DEFAULT_UC); \
+    eio_custom(async, EIO_PRI_DEFAULT, after, data);
+  typedef int async_rtn;
+  typedef eio_req uv_work_t;
+  #define RETURN_ASYNC return 0;
+  #define RETURN_ASYNC_AFTER \
+    ev_unref(EV_DEFAULT_UC); \
+    RETURN_ASYNC;
+#endif
+
+namespace nodearchive {
 
   struct request {
-    const char* input_data;
-    size_t input_length;
-    char* output_data;
-    size_t output_length;
+    std::string filename;
+    std::string target;
+    std::string error;
     v8::Persistent<v8::Function> callback;
   };
 
   void compress_work(uv_work_t *job) {
     request *req = static_cast<request*>(job->data);
-
-    size_t max_length = snappy::MaxCompressedLength(req->input_length);
-
-    req->output_data = new char[max_length];
-
-    snappy::RawCompress(
-        req->input_data,
-        req->input_length,
-        req->output_data,
-        &req->output_length);
   }
 
   void compress_done(uv_work_t *job) {
     v8::HandleScope scope;
-
     request *req = static_cast<request*>(job->data);
-
-    v8::Handle<v8::Object> buffer = node::Buffer::New(
-      req->output_data, req->output_length)->handle_;
-
-    v8::Handle<v8::Value> argv[2] = {
-      v8::Local<v8::Value>::New(v8::Null()), buffer };
-
-    v8::TryCatch try_catch;
-    req->callback->Call(v8::Context::GetCurrent()->Global(), 2, argv);
-    if (try_catch.HasCaught()) node::FatalException(try_catch);
-
-    req->callback.Dispose();
-    delete[] req->output_data;
-    delete req;
-    delete job;
   }
 
   v8::Handle<v8::Value> compress(const v8::Arguments& args) {
     v8::HandleScope scope;
-
     request *req = new request;
 
-    v8::Local<v8::Object> input = args[0]->ToObject();
-    req->input_length = node::Buffer::Length(input);
-    req->input_data = node::Buffer::Data(input);
-    req->callback = v8::Persistent<v8::Function>::New(
-      v8::Local<v8::Function>::Cast(args[1]));
-
-    uv_work_t *job = new uv_work_t;
-    job->data = req;
-    uv_queue_work(uv_default_loop(), job, compress_work, compress_done);
 
     return scope.Close(v8::Undefined());
   }
 
-  void uncompress_work(uv_work_t *job) {
-    request *req = static_cast<request*>(job->data);
+  static int copy_data(struct archive *ar, struct archive *aw)
+  {
+    int r;
+    const void *buff;
+    size_t size;
+    off_t offset;
 
-    if (!snappy::GetUncompressedLength(
-          req->input_data,
-          req->input_length,
-          &req->output_length)) {
-      req->output_length = -1u;
-      return;
-    }
-
-    req->output_data = new char[req->output_length];
-
-    if (!snappy::RawUncompress(
-          req->input_data,
-          req->input_length,
-          req->output_data)) {
-      req->output_length = -1u;
+    for (;;) {
+      r = archive_read_data_block(ar, &buff, &size, &offset);
+      if (r == ARCHIVE_EOF) {
+        return (ARCHIVE_OK);
+      }
+      if (r != ARCHIVE_OK)
+        return (r);
+      r = archive_write_data_block(aw, buff, size, offset);
+      if (r != ARCHIVE_OK) {
+        return (r);
+      }
     }
   }
 
-  void uncompress_done(uv_work_t *job) {
+  async_rtn decompress_work(uv_work_t *job) {
+    request *req = static_cast<request*>(job->data);
+
+    struct archive *a;
+    struct archive *ext;
+    struct archive_entry *entry;
+    int r;
+
+    a = archive_read_new();
+    archive_read_support_format_all(a);
+    archive_read_support_compression_all(a);
+
+    ext = archive_write_disk_new();
+    archive_write_disk_set_options(ext, ARCHIVE_EXTRACT_TIME);
+
+    if ((r = archive_read_open_file(a, req->filename.c_str(), 10240))) {
+      req->error = std::string(archive_error_string(a));
+    } else {
+      for (;;) {
+        r = archive_read_next_header(a, &entry);
+        if (r == ARCHIVE_EOF) break;
+
+        if (r != ARCHIVE_OK) {
+          req->error = std::string(archive_error_string(a));
+          break;
+        }
+
+        const char* pathname = archive_entry_pathname(entry);
+        archive_entry_set_pathname(entry, (req->target + '/' + pathname).c_str());
+
+        r = archive_write_header(ext, entry);
+
+        if (r != ARCHIVE_OK) {
+          req->error = std::string(archive_error_string(ext));
+          break;
+        } else {
+          copy_data(a, ext);
+          r = archive_write_finish_entry(ext);
+          if (r != ARCHIVE_OK) {
+            req->error = std::string(archive_error_string(ext));
+            break;
+          }
+        }
+      }
+    }
+
+    archive_read_close(a);
+    archive_read_free(a);
+
+    RETURN_ASYNC
+  }
+
+  async_rtn decompress_done(uv_work_t *job) {
     v8::HandleScope scope;
-
     request* req = static_cast<request*>(job->data);
+    v8::Handle<v8::Value> argv[1];
 
-    v8::Handle<v8::Value> argv[2];
-
-    if (req->output_length != -1u) {
+    if (req->error.empty()) {
       argv[0] = v8::Local<v8::Value>::New(v8::Null());
-      argv[1] = node::Buffer::New(
-          req->output_data,
-          req->output_length)->handle_;
     } else {
       argv[0] = v8::Exception::Error(
-        v8::String::New("Buffer could not be decompressed"));
-      argv[1] = v8::Local<v8::Value>::New(v8::Null());
+        v8::String::New(req->error.c_str()));
     }
 
     v8::TryCatch try_catch;
-    req->callback->Call(v8::Context::GetCurrent()->Global(), 2, argv);
+    req->callback->Call(v8::Context::GetCurrent()->Global(), 1, argv);
     if (try_catch.HasCaught()) node::FatalException(try_catch);
 
     req->callback.Dispose();
-    delete[] req->output_data;
     delete req;
-    delete job;
+    RETURN_ASYNC_AFTER
   }
 
-  v8::Handle<v8::Value> uncompress(const v8::Arguments& args) {
+  v8::Handle<v8::Value> decompress(const v8::Arguments& args) {
     v8::HandleScope scope;
 
     request *req = new request;
+    v8::Handle<v8::Value> arg0 = args[0];
+    v8::String::Utf8Value filename(arg0);
 
-    v8::Local<v8::Object> input = args[0]->ToObject();
+    v8::Handle<v8::Value> arg1 = args[1];
+    v8::String::Utf8Value target(arg1);
 
-    req->input_length = node::Buffer::Length(input);
-    req->input_data = node::Buffer::Data(input);
+    req->filename = std::string(*filename);
+    req->target   = std::string(*target);
     req->callback = v8::Persistent<v8::Function>::New(
-      v8::Local<v8::Function>::Cast(args[1]));
+      v8::Local<v8::Function>::Cast(args[2]));
 
-    uv_work_t *uncompressJob = new uv_work_t;
-    uncompressJob->data = req;
-    uv_queue_work(
-      uv_default_loop(),
-      uncompressJob,
-      uncompress_work,
-      uncompress_done);
-
+    BEGIN_ASYNC(req, decompress_work, decompress_done);
     return scope.Close(v8::Undefined());
   }
 
-  void Init(v8::Handle<v8::Object> target) {
+  extern "C" void init(v8::Handle<v8::Object> target) {
     target->Set(v8::String::NewSymbol("compress"),
       v8::FunctionTemplate::New(compress)->GetFunction());
-    target->Set(v8::String::NewSymbol("uncompress"),
-      v8::FunctionTemplate::New(uncompress)->GetFunction());
+    target->Set(v8::String::NewSymbol("decompress"),
+      v8::FunctionTemplate::New(decompress)->GetFunction());
   }
-
-  NODE_MODULE(binding, Init)
 }

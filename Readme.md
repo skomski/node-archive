@@ -2,6 +2,12 @@
 
 Node.js bindings for libarchive (https://github.com/libarchive/libarchive)
 
+## WIP
+
+* Node.js Event API
+* Compress
+* Ready for production
+
 ## Install
 
 ```
@@ -13,28 +19,19 @@ npm install archive
 ```javascript
 
 var Archive = require('archive');
-var buffer  = new Buffer('yyyyyyyyyyyyyyyyyyy');
 
-Archive.compress(buffer, function(err, compressed){
+Archive.decompress(__dirname + '/archive.tar.gz', __dirname, function(err, decompressed){
   if (err) throw err;
-
-  Archive.decompress(compressed, function(err, decompressed){
-    if (err) throw err;
-  });
 });
 ```
 
 ## Methods
 
-### compress(buffer, cb)
-  * Required:
-    * `buffer` - Raw buffer
-    * `cb` - Function with two arguments `(err, compressedBuffer)`
-
 ### decompress(buffer, cb)
   * Required:
-    * `buffer` - Compressed buffer
-    * `cb` - Function with two arguments `(err, decompressedBuffer)`
+    * `input`  - Path to source archive
+    * `output` - Path to target directory
+    * `cb` - Function with two arguments `(err, files)`
 
 ## License
 
