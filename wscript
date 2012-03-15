@@ -19,4 +19,4 @@ def build(bld):
   ]
   obj.target = 'binding'
   obj.source = 'src/binding.cc'
-  obj.uselib = 'ARCHIVE'
+  obj.env.append_value('LINKFLAGS','-larchive')
