@@ -5,7 +5,7 @@ var Fs     = require('fs');
 var tests = 0;
 
 test = function(name, file) {
-  Archive.decompress(file, __dirname, function(err, decompressed){
+  Archive.decompress(file, __dirname + '/result/', function(err, decompressed){
     Assert.ifError(err);
     tests++;
   });

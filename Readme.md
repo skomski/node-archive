@@ -5,8 +5,6 @@ Node.js bindings for libarchive (https://github.com/libarchive/libarchive)
 ## WIP
 
 * Node.js Event API
-* Compress
-* Ready for production
 
 ## Install
 

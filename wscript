@@ -5,13 +5,13 @@ def configure(conf):
   conf.check_tool('compiler_cxx')
   conf.check_tool('node_addon')
   conf.env.append_unique('CXXFLAGS', ['-Wall', '-O3', '-DNDEBUG'])
-  conf.env['LIBPATH_ARCHIVE'] = '../deps/libarchive/libarchive'
-  conf.env['LIB_ARCHIVE'] = 'archive'
+  if not conf.check_cfg(package='libarchive', args='--cflags --libs', uselib_store='ARCHIVE'):
+    if not conf.check(lib="archive", uselib_store="ARCHIVE"):
+      conf.fatal('Missing libarchive, download it from http://code.google.com/p/libarchive/');
 
 def build(bld):
   obj = bld.new_task_gen('cxx', 'shlib', 'node_addon')
   obj.cxxflags = [
-    '-I../deps/libarchive/libarchive'
     '-Wall',
     '-g',
     '-D_FILE_OFFSET_BITS=64',
@@ -19,4 +19,4 @@ def build(bld):
   ]
   obj.target = 'binding'
   obj.source = 'src/binding.cc'
-  obj.env.append_value('LINKFLAGS', '-larchive')
+  obj.uselib = 'ARCHIVE'
