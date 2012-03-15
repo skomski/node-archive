@@ -2,6 +2,7 @@ language: node_js
 
 before_install:
   - "sudo apt-get remove libarchive1"
+  - "sudo apt-get install libtool"
   - "wget https://github.com/downloads/libarchive/libarchive/libarchive-3.0.3.tar.gz"
   - "tar xfz libarchive-3.0.3.tar.gz"
   - "cd libarchive-3.0.3/"
