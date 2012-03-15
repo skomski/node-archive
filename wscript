@@ -5,7 +5,7 @@ def configure(conf):
   conf.check_tool('compiler_cxx')
   conf.check_tool('node_addon')
   conf.env.append_unique('CXXFLAGS', ['-Wall', '-O3', '-DNDEBUG'])
-  conf.env['LIBPATH_ARCHIVE'] = '../deps/libarchive'
+  conf.env['LIBPATH_ARCHIVE'] = '../deps/libarchive/libarchive'
   conf.env['LIB_ARCHIVE'] = 'archive'
 
 def build(bld):
