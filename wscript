@@ -11,7 +11,7 @@ def configure(conf):
 def build(bld):
   obj = bld.new_task_gen('cxx', 'shlib', 'node_addon')
   obj.cxxflags = [
-    '-I../deps'
+    '-I../deps/libarchive/libarchive'
     '-Wall',
     '-g',
     '-D_FILE_OFFSET_BITS=64',
