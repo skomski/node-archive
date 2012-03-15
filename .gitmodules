@@ -1,0 +1,3 @@
+[submodule "deps/libarchive"]
+	path = deps/libarchive
+	url = git://github.com/libarchive/libarchive.git
