@@ -1,4 +1,4 @@
-# $LastChangedRevision$, $LastChangedDate$
+# $LastChangedRevision: 4095 $, $LastChangedDate: 2012-01-07 16:47:52 -0800 (Sat, 07 Jan 2012) $
 Summary:        Library to create and read several different archive formats
 Summary(pl):    Biblioteka do tworzenia i odczytu ró¿nych formatów archiwów
 Name:           libarchive
