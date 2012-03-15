@@ -1,0 +1,26 @@
+{
+  "author": "Karl Skomski <karl@skomski.com>",
+  "name": "archive",
+  "description": "Node.js bindings to libarchive",
+  "version": "0.0.1",
+  "homepage": "https://github.com/skomski/node-archive",
+  "repository": {
+    "type": "git",
+    "url": "git://github.com/skomski/node-archive.git"
+  },
+  "main": "lib/archive.js",
+  "directories": {
+    "lib": "."
+  },
+  "scripts": {
+    "test": "node test/test.js"
+  },
+  "engines": {
+    "node": ">= 0.4.12"
+  },
+  "dependencies": {
+  },
+  "devDependencies": {
+    "benchmark": "0.3.0"
+  }
+}
