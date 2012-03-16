@@ -2,3 +2,4 @@ build/*
 test/result/urls.10K.gz
 .lock-wscript
 node_modules/*
+npm-debug.log

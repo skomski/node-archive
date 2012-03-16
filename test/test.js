@@ -8,6 +8,8 @@ test = function(name, file) {
   Archive.decompress(file, __dirname + '/result/', function(err, decompressed){
     Assert.ifError(err);
     tests++;
+    file = Fs.readFileSync(__dirname + '/result/urls.10K.gz');
+    Assert.ok(file.length > 0);
   });
 }
 
