@@ -5,8 +5,7 @@ before_install:
   - "wget https://github.com/downloads/libarchive/libarchive/libarchive-3.0.3.tar.gz"
   - "tar xfz libarchive-3.0.3.tar.gz"
   - "cd libarchive-3.0.3/"
-  - "./configure"
-  - "make"
+  - "./configure --prefix=/usr --without-xml2"
   - "sudo make install"
   - "cd .."
 
