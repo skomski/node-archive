@@ -25,11 +25,9 @@ test = function(file, dir) {
   });
 
   reader.on('directory', function(directory) {
-    try {
-      Fs.mkdirSync(__dirname + '/result/' + directory.path);
-    } catch (error) {
-    }
-    reader.nextEntry();
+    Fs.mkdir(__dirname + '/result/' + directory.path, 0777, function() {
+      reader.nextEntry();
+    });
   });
 
   reader.on('file', function(file) {
