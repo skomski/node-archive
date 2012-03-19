@@ -21,7 +21,7 @@ diff = function(dir, cb) {
 
 test = function(file, dir) {
   var reader = Archive.createFileReader({
-    filename: file
+    path: file
   });
 
   reader.on('directory', function(directory) {
