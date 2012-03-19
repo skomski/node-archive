@@ -2,6 +2,7 @@ var Archive = require('..');
 var Assert = require('assert');
 var Fs     = require('fs');
 var spawn = require('child_process').spawn;
+var rimraf = require('rimraf');
 
 var tests = 0;
 
@@ -25,7 +26,8 @@ test = function(file, dir) {
   });
 
   reader.on('directory', function(directory) {
-    Fs.mkdir(__dirname + '/result/' + directory.path, 0777, function() {
+    Fs.mkdir(__dirname + '/result/' + directory.path, 0777, function(err) {
+      if (err) throw err;
       reader.nextEntry();
     });
   });
@@ -61,10 +63,12 @@ test = function(file, dir) {
   });
 }
 
-test(__dirname + '/fixture/snappy-1.0.5.tar.gz', 'snappy-1.0.5');
-//test('file', __dirname + '/fixture/up.zip');
-//test('file', __dirname + '/fixture/node.pkg');
-//test('file', __dirname + '/fixture/theme.rar');
+rimraf(__dirname + '/result', function() {
+  Fs.mkdir(__dirname + '/result', 0777, function(err) {
+    if (err) throw err;
+    test(__dirname + '/fixture/snappy-1.0.5.tar.gz', 'snappy-1.0.5');
+  });
+});
 
 process.on('exit', function() {
   Assert.equal(tests, 1);

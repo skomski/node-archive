@@ -157,6 +157,7 @@ namespace nodearchive {
        helpers::Emit(req->archive_entry->handle_, "data", buffer);
     }
 
+    req->archive_entry->Unref();
     delete req;
     RETURN_ASYNC_AFTER
   }

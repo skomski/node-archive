@@ -93,6 +93,7 @@ namespace nodearchive {
 
 
     req->callback.Dispose();
+    req->reader->Unref();
     delete req;
     RETURN_ASYNC_AFTER
   }
@@ -158,6 +159,7 @@ namespace nodearchive {
       helpers::Emit(req->reader->handle_, "entry", entry);
     }
 
+    req->reader->Unref();
     delete req;
     RETURN_ASYNC_AFTER
   }
