@@ -1,5 +1,5 @@
 build/*
-test/result/urls.10K.gz
+test/result/s*
 .lock-wscript
 node_modules/*
 npm-debug.log

@@ -13,7 +13,7 @@
     "lib": "."
   },
   "scripts": {
-    "test": "node test/test.js"
+    "test": "node test/test-reader.js"
   },
   "engines": {
     "node": ">= 0.4.0"

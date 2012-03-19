@@ -4,7 +4,7 @@ Node.js bindings for libarchive (https://github.com/libarchive/libarchive)
 
 ## WIP
 
-* Node.js Event API
+* ArchiveWriter
 
 ## Install
 
@@ -12,24 +12,39 @@ Node.js bindings for libarchive (https://github.com/libarchive/libarchive)
 npm install archive
 ```
 
-## Usage
+## Reader
 
 ```javascript
 
 var Archive = require('archive');
 
-Archive.decompress(__dirname + '/archive.tar.gz', __dirname, function(err, decompressed){
-  if (err) throw err;
+var archive = new Archive.Reader({
+  filename: 'snappy.tar.gz'
+});
+
+archive.on('file', function(file) {
+  console.log(entry.path, entry.mtime);
+
+  entry.on('data', function(buffer) {
+    console.log(buffer.toString());
+    file.nextChunk();
+  });
+
+  entry.on('end', function(buffer) {
+    console.log('end');
+    reader.nextChunk();
+  });
+  file.nextChunk();
+});
+
+archive.on('error', function(err) {
+  console.error(err);
+});
+
+archive.open(function() {
+  archive.nextEntry();
 });
 ```
-
-## Methods
-
-### decompress(buffer, cb)
-  * Required:
-    * `input`  - Path to source archive
-    * `output` - Path to target directory
-    * `cb` - Function with two arguments `(err, files)`
 
 ## License
 
