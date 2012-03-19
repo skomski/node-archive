@@ -173,6 +173,8 @@ namespace nodearchive {
 
       BEGIN_ASYNC(req, NextChunkWork, NextChunkDone);
       entry->Ref();
+    } else {
+      helpers::Emit(entry->handle_, "end", Undefined());
     }
 
     return scope.Close(Undefined());
