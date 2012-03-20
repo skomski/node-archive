@@ -6,6 +6,14 @@ Node.js bindings for libarchive (https://github.com/libarchive/libarchive)
 
 * ArchiveWriter
 
+## Dependencies
+
+```
+libarchive
+http://libarchive.github.com/
+>= 3.0.3
+````
+
 ## Install
 
 ```
@@ -19,21 +27,31 @@ npm install archive
 var Archive = require('archive');
 
 var archive = new Archive.Reader({
-  filename: 'snappy.tar.gz'
+  path: 'snappy.tar.gz'
+});
+
+archive.on('directory', function(directory) {
+  console.log(directory.path);
+  reader.nextEntry();
 });
 
 archive.on('file', function(file) {
   console.log(entry.path, entry.mtime);
+  
+  file.on('error', function(err) {
+    console.error(err);
+  });
 
-  entry.on('data', function(buffer) {
+  file.on('data', function(buffer) {
     console.log(buffer.toString());
     file.nextChunk();
   });
 
-  entry.on('end', function(buffer) {
+  file.on('end', function(buffer) {
     console.log('end');
-    reader.nextChunk();
+    reader.nextEntry();
   });
+  
   file.nextChunk();
 });
 
