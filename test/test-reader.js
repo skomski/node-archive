@@ -20,7 +20,7 @@ diff = function(dir, cb) {
   });
 }
 
-test = function(file, dir) {
+test = function(file, dir, compression) {
   var reader = Archive.createFileReader({
     path: file
   });
@@ -59,7 +59,7 @@ test = function(file, dir) {
   });
 
   reader.open(function(archive) {
-    console.log(archive);
+    Assert.equal(archive.compression, compression);
     reader.nextEntry();
   });
 }
@@ -67,11 +67,12 @@ test = function(file, dir) {
 rimraf(__dirname + '/result', function() {
   Fs.mkdir(__dirname + '/result', 0777, function(err) {
     if (err) throw err;
-    test(__dirname + '/fixture/snappy-1.0.5.tar.gz', 'snappy-1.0.5');
+    test(__dirname + '/fixture/snappy-1.0.5.tar.gz', 'snappy-1.0.5', 'gzip');
+    test(__dirname + '/fixture/archive.xz', 'archive', 'xz');
   });
 });
 
 process.on('exit', function() {
-  Assert.equal(tests, 1);
+  Assert.equal(tests, 2);
 });
 
