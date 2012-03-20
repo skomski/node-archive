@@ -65,6 +65,12 @@ namespace nodearchive {
     Local<Value> argv[2] = { External::New(archive), External::New(entry) };
     Local<Object> instance = constructor->NewInstance(2, argv);
 
+    if (archive_format_name(archive) != NULL) {
+      instance->Set(
+          String::NewSymbol("format"),
+          String::New(archive_format_name(archive)));
+    }
+
     if (archive_entry_pathname(entry) != NULL) {
       instance->Set(
           String::NewSymbol("path"),
