@@ -99,16 +99,6 @@ namespace nodearchive {
           String::New(req->compression_name));
       }
 
-      object->Set(
-          String::NewSymbol("fileCount"),
-          Integer::New(req->file_count));
-
-      if (req->format_name != NULL) {
-        object->Set(
-          String::NewSymbol("format"),
-          String::New(req->format_name));
-      }
-
       Handle<Value> argv[1] = { object };
 
       TryCatch try_catch;
