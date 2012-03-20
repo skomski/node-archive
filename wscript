@@ -4,7 +4,7 @@ def set_options(opt):
 def configure(conf):
   conf.check_tool('compiler_cxx')
   conf.check_tool('node_addon')
-# conf.env.append_unique('CXXFLAGS', ['-Wall', '-O3', '-DNDEBUG'])
+  conf.env.append_unique('CXXFLAGS', ['-Wall', '-O3', '-DNDEBUG'])
   if not conf.check_cfg(package='libarchive', args='--cflags --libs', uselib_store='ARCHIVE'):
     if not conf.check(lib="archive", uselib_store="ARCHIVE"):
       conf.fatal('Missing libarchive, download it from http://code.google.com/p/libarchive/');
