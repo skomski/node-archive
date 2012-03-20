@@ -69,10 +69,11 @@ rimraf(__dirname + '/result', function() {
     if (err) throw err;
     test(__dirname + '/fixture/snappy-1.0.5.tar.gz', 'snappy-1.0.5', 'gzip');
     test(__dirname + '/fixture/archive.xz', 'archive', 'xz');
+    test(__dirname + '/fixture/glyphicons_free.zip', 'glyphicons_free', 'none');
   });
 });
 
 process.on('exit', function() {
-  Assert.equal(tests, 2);
+  Assert.equal(tests, 3);
 });
 
