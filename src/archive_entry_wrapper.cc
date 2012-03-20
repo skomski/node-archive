@@ -1,7 +1,6 @@
 // Copyright 2012 Karl Skomski MIT
 
-#include "archive_entry.h"
-
+#include "archive_entry_wrapper.h"
 
 namespace nodearchive {
   using v8::Object;
@@ -23,20 +22,19 @@ namespace nodearchive {
   using v8::External;
   using v8::Date;
 
-  ArchiveEntry::ArchiveEntry(archive *archive, archive_entry *entry) :
+  ArchiveEntryWrapper::ArchiveEntryWrapper(archive *archive, archive_entry *entry) :
     archive_(archive),
     entry_(entry) {
 
   }
-  ArchiveEntry::~ArchiveEntry() {
-    //archive_entry_free(entry_);
-  }
 
-  Persistent<Function> ArchiveEntry::constructor;
+  ArchiveEntryWrapper::~ArchiveEntryWrapper() {}
 
-  void ArchiveEntry::Init(Handle<Object> target) {
+  Persistent<Function> ArchiveEntryWrapper::constructor;
+
+  void ArchiveEntryWrapper::Init(Handle<Object> target) {
     Local<FunctionTemplate> entry_template = FunctionTemplate::New(New);
-    entry_template->SetClassName(String::NewSymbol("ArchiveEntry"));
+    entry_template->SetClassName(String::NewSymbol("ArchiveEntryWrapper"));
     entry_template->InstanceTemplate()->SetInternalFieldCount(1);
 
     entry_template->PrototypeTemplate()->Set(String::NewSymbol("nextChunk"),
@@ -46,13 +44,13 @@ namespace nodearchive {
     target->Set(String::NewSymbol("Entry"), constructor);
   }
 
-  Handle<Value> ArchiveEntry::New(const Arguments& args) {
+  Handle<Value> ArchiveEntryWrapper::New(const Arguments& args) {
     HandleScope scope;
 
     Local<External> parent_archive = Local<External>::Cast(args[0]);
     Local<External> entry = Local<External>::Cast(args[1]);
 
-    ArchiveEntry* reader = new ArchiveEntry(
+    ArchiveEntryWrapper* reader = new ArchiveEntryWrapper(
         static_cast<archive*>(parent_archive->Value()),
         static_cast<archive_entry*>(entry->Value()));
 
@@ -61,7 +59,7 @@ namespace nodearchive {
     return scope.Close(args.This());
   }
 
-  Handle<Value> ArchiveEntry::NewInstance(archive *archive, archive_entry *entry) {
+  Handle<Value> ArchiveEntryWrapper::NewInstance(archive *archive, archive_entry *entry) {
     HandleScope scope;
 
     Local<Value> argv[2] = { External::New(archive), External::New(entry) };
@@ -117,7 +115,7 @@ namespace nodearchive {
   }
 
   struct extract_request {
-    ArchiveEntry *archive_entry;
+    ArchiveEntryWrapper *archive_entry;
     const char* error_string;
     const void* output_data;
     size_t output_length;
@@ -125,7 +123,7 @@ namespace nodearchive {
     bool eof;
   };
 
-  async_rtn ArchiveEntry::NextChunkWork(uv_work_t *job) {
+  async_rtn ArchiveEntryWrapper::NextChunkWork(uv_work_t *job) {
     extract_request *req = static_cast<extract_request*>(job->data);
 
     int return_value = archive_read_data_block(
@@ -143,7 +141,7 @@ namespace nodearchive {
     RETURN_ASYNC
   }
 
-  async_rtn ArchiveEntry::NextChunkDone(uv_work_t *job) {
+  async_rtn ArchiveEntryWrapper::NextChunkDone(uv_work_t *job) {
     v8::HandleScope scope;
     extract_request *req = static_cast<extract_request*>(job->data);
 
@@ -162,9 +160,9 @@ namespace nodearchive {
     RETURN_ASYNC_AFTER
   }
 
-  Handle<Value> ArchiveEntry::NextChunk(const Arguments& args) {
+  Handle<Value> ArchiveEntryWrapper::NextChunk(const Arguments& args) {
     HandleScope scope;
-    ArchiveEntry* entry = ObjectWrap::Unwrap<ArchiveEntry>(args.This());
+    ArchiveEntryWrapper* entry = ObjectWrap::Unwrap<ArchiveEntryWrapper>(args.This());
 
     if (archive_entry_size(entry->entry_) > 0) {
       extract_request *req = new extract_request;

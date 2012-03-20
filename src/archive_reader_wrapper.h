@@ -3,16 +3,16 @@
 #ifndef ARCHIVE_READER_H__
 #define ARCHIVE_READER_H__
 
-#include "archive_entry.h"
+#include "archive_entry_wrapper.h"
 #include <string>
 
 namespace nodearchive {
-  class ArchiveReader : public node::ObjectWrap {
+  class ArchiveReaderWrapper : public node::ObjectWrap {
     public:
       static void Init(v8::Handle<v8::Object> target);
     private:
-      ArchiveReader(const char* filename);
-      ~ArchiveReader();
+      ArchiveReaderWrapper(const char* filename);
+      ~ArchiveReaderWrapper();
 
       static v8::Handle<v8::Value> New(const v8::Arguments& args);
 

@@ -1,6 +1,6 @@
-#include "archive_reader.h"
+#include "archive_reader_wrapper.h"
 
 extern "C" void init(v8::Handle<v8::Object> target) {
-  nodearchive::ArchiveReader::Init(target);
-  nodearchive::ArchiveEntry::Init(target);
+  nodearchive::ArchiveReaderWrapper::Init(target);
+  nodearchive::ArchiveEntryWrapper::Init(target);
 }

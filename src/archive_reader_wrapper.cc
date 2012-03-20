@@ -1,6 +1,6 @@
 // Copyright 2012 Karl Skomski MIT
 
-#include "archive_reader.h"
+#include "archive_reader_wrapper.h"
 
 namespace nodearchive {
   using v8::Object;
@@ -21,19 +21,19 @@ namespace nodearchive {
   using v8::Undefined;
   using v8::External;
 
-  ArchiveReader::ArchiveReader(const char* filename) {
+  ArchiveReaderWrapper::ArchiveReaderWrapper(const char* filename) {
     filename_ = filename;
 
     archive_ = archive_read_new();
     archive_read_support_filter_all(archive_);
     archive_read_support_format_all(archive_);
   }
-  ArchiveReader::~ArchiveReader() {
+  ArchiveReaderWrapper::~ArchiveReaderWrapper() {
   }
 
-  void ArchiveReader::Init(Handle<Object> target) {
+  void ArchiveReaderWrapper::Init(Handle<Object> target) {
     Local<FunctionTemplate> reader_template = FunctionTemplate::New(New);
-    reader_template->SetClassName(String::NewSymbol("ArchiveReader"));
+    reader_template->SetClassName(String::NewSymbol("ArchiveReaderWrapper"));
     reader_template->InstanceTemplate()->SetInternalFieldCount(1);
 
     reader_template->PrototypeTemplate()->Set(String::NewSymbol("open"),
@@ -47,22 +47,25 @@ namespace nodearchive {
     target->Set(String::NewSymbol("Reader"), constructor);
   }
 
-  Handle<Value> ArchiveReader::New(const Arguments& args) {
+  Handle<Value> ArchiveReaderWrapper::New(const Arguments& args) {
     HandleScope scope;
 
-    ArchiveReader* reader = new ArchiveReader(*v8::String::Utf8Value(args[0]));
+    ArchiveReaderWrapper* reader = new ArchiveReaderWrapper(*v8::String::Utf8Value(args[0]));
     reader->Wrap(args.This());
 
     return scope.Close(args.This());
   }
 
   struct open_request {
-    ArchiveReader* reader;
+    ArchiveReaderWrapper* reader;
     const char* error_string;
+    const char* compression_name;
+    const char* format_name;
+    int file_count;
     v8::Persistent<v8::Function> callback;
   };
 
-  async_rtn ArchiveReader::OpenWork(uv_work_t *job) {
+  async_rtn ArchiveReaderWrapper::OpenWork(uv_work_t *job) {
     open_request *req = static_cast<open_request*>(job->data);
 
     int return_value = archive_read_open_filename(
@@ -72,22 +75,44 @@ namespace nodearchive {
 
     if (return_value != ARCHIVE_OK) {
       req->error_string = archive_error_string(req->reader->archive_);
+    } else {
+      req->compression_name = archive_compression_name(req->reader->archive_);
+      req->format_name = archive_format_name(req->reader->archive_);
+      req->file_count = archive_file_count(req->reader->archive_);
     }
 
     RETURN_ASYNC
   }
 
-  async_rtn ArchiveReader::OpenDone(uv_work_t *job) {
+  async_rtn ArchiveReaderWrapper::OpenDone(uv_work_t *job) {
     v8::HandleScope scope;
     open_request *req = static_cast<open_request*>(job->data);
 
     if (req->error_string != NULL) {
       helpers::EmitError(req->reader->handle_, req->error_string);
     } else {
-      Handle<Value> argv[1] = { Undefined() };
+      Local<Object> object = Object::New();
+
+      if (req->compression_name != NULL) {
+        object->Set(
+          String::NewSymbol("compression"),
+          String::New(req->compression_name));
+      }
+
+      object->Set(
+          String::NewSymbol("fileCount"),
+          Integer::New(req->file_count));
+
+      if (req->format_name != NULL) {
+        object->Set(
+          String::NewSymbol("format"),
+          String::New(req->format_name));
+      }
+
+      Handle<Value> argv[1] = { object };
 
       TryCatch try_catch;
-      req->callback->Call(v8::Context::GetCurrent()->Global(), 1, argv);
+      req->callback->Call(Context::GetCurrent()->Global(), 1, argv);
       if (try_catch.HasCaught()) node::FatalException(try_catch);
     }
 
@@ -98,9 +123,9 @@ namespace nodearchive {
     RETURN_ASYNC_AFTER
   }
 
-  Handle<Value> ArchiveReader::Open(const Arguments& args) {
+  Handle<Value> ArchiveReaderWrapper::Open(const Arguments& args) {
     HandleScope scope;
-    ArchiveReader* reader = ObjectWrap::Unwrap<ArchiveReader>(args.This());
+    ArchiveReaderWrapper* reader = ObjectWrap::Unwrap<ArchiveReaderWrapper>(args.This());
 
     open_request *req = new open_request;
     req->reader = reader;
@@ -115,13 +140,13 @@ namespace nodearchive {
   }
 
   struct next_entry_request {
-    ArchiveReader* reader;
+    ArchiveReaderWrapper* reader;
     struct archive_entry *entry;
     bool eof;
     const char* error_string;
   };
 
-  async_rtn ArchiveReader::NextEntryWork(uv_work_t *job) {
+  async_rtn ArchiveReaderWrapper::NextEntryWork(uv_work_t *job) {
     next_entry_request *req = static_cast<next_entry_request*>(job->data);
 
 
@@ -142,7 +167,7 @@ namespace nodearchive {
     RETURN_ASYNC
   }
 
-  async_rtn ArchiveReader::NextEntryDone(uv_work_t *job) {
+  async_rtn ArchiveReaderWrapper::NextEntryDone(uv_work_t *job) {
     v8::HandleScope scope;
     next_entry_request *req = static_cast<next_entry_request*>(job->data);
 
@@ -153,7 +178,7 @@ namespace nodearchive {
     } else if (req->error_string != NULL) {
       helpers::EmitError(req->reader->handle_, req->error_string);
     } else {
-      Handle<Value> entry = ArchiveEntry::NewInstance(
+      Handle<Value> entry = ArchiveEntryWrapper::NewInstance(
           req->reader->archive_,
           req->entry);
       helpers::Emit(req->reader->handle_, "entry", entry);
@@ -164,9 +189,9 @@ namespace nodearchive {
     RETURN_ASYNC_AFTER
   }
 
-  Handle<Value> ArchiveReader::NextEntry(const Arguments& args) {
+  Handle<Value> ArchiveReaderWrapper::NextEntry(const Arguments& args) {
     HandleScope scope;
-    ArchiveReader* reader = ObjectWrap::Unwrap<ArchiveReader>(args.This());
+    ArchiveReaderWrapper* reader = ObjectWrap::Unwrap<ArchiveReaderWrapper>(args.This());
 
     next_entry_request *req = new next_entry_request;
     req->reader = reader;

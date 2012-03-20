@@ -20,8 +20,8 @@ def build(bld):
   obj.target = 'addon'
   obj.source = [
     'src/helpers.cc',
-    'src/archive_reader.cc',
-    'src/archive_entry.cc',
+    'src/archive_reader_wrapper.cc',
+    'src/archive_entry_wrapper.cc',
     'src/addon.cc'
   ]
   obj.env.append_value('LINKFLAGS','-larchive')

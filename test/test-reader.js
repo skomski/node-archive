@@ -59,6 +59,7 @@ test = function(file, dir) {
   });
 
   reader.open(function(archive) {
+    console.log(archive);
     reader.nextEntry();
   });
 }
