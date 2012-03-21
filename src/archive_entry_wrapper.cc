@@ -120,7 +120,7 @@ namespace nodearchive {
     return scope.Close(instance);
   }
 
-  struct extract_request {
+  struct ExtractRequest {
     ArchiveEntryWrapper *archive_entry;
     const char* error_string;
     const void* output_data;
@@ -130,7 +130,7 @@ namespace nodearchive {
   };
 
   async_rtn ArchiveEntryWrapper::NextChunkWork(uv_work_t *job) {
-    extract_request *req = static_cast<extract_request*>(job->data);
+    ExtractRequest *req = static_cast<ExtractRequest*>(job->data);
 
     int return_value = archive_read_data_block(
         req->archive_entry->archive_,
@@ -149,7 +149,7 @@ namespace nodearchive {
 
   async_rtn ArchiveEntryWrapper::NextChunkDone(uv_work_t *job) {
     v8::HandleScope scope;
-    extract_request *req = static_cast<extract_request*>(job->data);
+    ExtractRequest *req = static_cast<ExtractRequest*>(job->data);
 
     if(req->eof == true) {
       helpers::Emit(req->archive_entry->handle_, "end", Undefined());
@@ -171,7 +171,7 @@ namespace nodearchive {
     ArchiveEntryWrapper* entry = ObjectWrap::Unwrap<ArchiveEntryWrapper>(args.This());
 
     if (archive_entry_size(entry->entry_) > 0) {
-      extract_request *req = new extract_request;
+      ExtractRequest *req = new ExtractRequest;
       req->archive_entry = entry;
       req->error_string = NULL;
       req->eof = false;

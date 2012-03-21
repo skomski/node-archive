@@ -56,7 +56,7 @@ namespace nodearchive {
     return scope.Close(args.This());
   }
 
-  struct open_request {
+  struct OpenRequest {
     ArchiveReaderWrapper* reader;
     const char* error_string;
     const char* compression_name;
@@ -66,7 +66,7 @@ namespace nodearchive {
   };
 
   async_rtn ArchiveReaderWrapper::OpenWork(uv_work_t *job) {
-    open_request *req = static_cast<open_request*>(job->data);
+    OpenRequest *req = static_cast<OpenRequest*>(job->data);
 
     int return_value = archive_read_open_filename(
         req->reader->archive_,
@@ -86,7 +86,7 @@ namespace nodearchive {
 
   async_rtn ArchiveReaderWrapper::OpenDone(uv_work_t *job) {
     v8::HandleScope scope;
-    open_request *req = static_cast<open_request*>(job->data);
+    OpenRequest *req = static_cast<OpenRequest*>(job->data);
 
     if (req->error_string != NULL) {
       helpers::EmitError(req->reader->handle_, req->error_string);
@@ -117,7 +117,7 @@ namespace nodearchive {
     HandleScope scope;
     ArchiveReaderWrapper* reader = ObjectWrap::Unwrap<ArchiveReaderWrapper>(args.This());
 
-    open_request *req = new open_request;
+    OpenRequest *req = new OpenRequest;
     req->reader = reader;
     req->error_string = NULL;
     req->callback = Persistent<Function>::New(
@@ -129,7 +129,7 @@ namespace nodearchive {
     return scope.Close(Undefined());
   }
 
-  struct next_entry_request {
+  struct NextEntryRequest {
     ArchiveReaderWrapper* reader;
     struct archive_entry *entry;
     bool eof;
@@ -137,7 +137,7 @@ namespace nodearchive {
   };
 
   async_rtn ArchiveReaderWrapper::NextEntryWork(uv_work_t *job) {
-    next_entry_request *req = static_cast<next_entry_request*>(job->data);
+    NextEntryRequest *req = static_cast<NextEntryRequest*>(job->data);
 
 
     int return_value = archive_read_next_header(
@@ -159,7 +159,7 @@ namespace nodearchive {
 
   async_rtn ArchiveReaderWrapper::NextEntryDone(uv_work_t *job) {
     v8::HandleScope scope;
-    next_entry_request *req = static_cast<next_entry_request*>(job->data);
+    NextEntryRequest *req = static_cast<NextEntryRequest*>(job->data);
 
     if (req->eof == true) {
       helpers::Emit(req->reader->handle_, "end", Undefined());
@@ -183,7 +183,7 @@ namespace nodearchive {
     HandleScope scope;
     ArchiveReaderWrapper* reader = ObjectWrap::Unwrap<ArchiveReaderWrapper>(args.This());
 
-    next_entry_request *req = new next_entry_request;
+    NextEntryRequest *req = new NextEntryRequest;
     req->reader = reader;
     req->eof    = false;
     req->error_string = NULL;
