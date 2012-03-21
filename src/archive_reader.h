@@ -25,7 +25,7 @@ namespace nodearchive {
       static async_rtn NextEntryWork(uv_work_t *job);
       static async_rtn NextEntryDone(uv_work_t *job);
 
-      struct archive *archive_;
+      archive *archive_;
       std::string filename_;
   };
 }

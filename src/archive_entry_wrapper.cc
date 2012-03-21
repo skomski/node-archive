@@ -22,10 +22,8 @@ namespace nodearchive {
   using v8::External;
   using v8::Date;
 
-  ArchiveEntryWrapper::ArchiveEntryWrapper(
-      archive *archive, archive_entry *entry) :
-    archive_(archive),
-    entry_(entry) {
+  ArchiveEntryWrapper::ArchiveEntryWrapper(archive *archive) :
+    archive_(archive) {
   }
 
   ArchiveEntryWrapper::~ArchiveEntryWrapper() {}
@@ -48,11 +46,9 @@ namespace nodearchive {
     HandleScope scope;
 
     Local<External> parent_archive = Local<External>::Cast(args[0]);
-    Local<External> entry = Local<External>::Cast(args[1]);
 
     ArchiveEntryWrapper* reader = new ArchiveEntryWrapper(
-        static_cast<archive*>(parent_archive->Value()),
-        static_cast<archive_entry*>(entry->Value()));
+        static_cast<archive*>(parent_archive->Value()));
 
     reader->Wrap(args.This());
 
@@ -63,8 +59,8 @@ namespace nodearchive {
       archive *archive, archive_entry *entry) {
     HandleScope scope;
 
-    Local<Value> argv[2] = { External::New(archive), External::New(entry) };
-    Local<Object> instance = constructor->NewInstance(2, argv);
+    Local<Value> argv[1] = { External::New(archive) };
+    Local<Object> instance = constructor->NewInstance(1, argv);
 
     if (archive_format_name(archive) != NULL) {
       instance->Set(
@@ -174,17 +170,13 @@ namespace nodearchive {
     ArchiveEntryWrapper* entry = ObjectWrap::Unwrap<ArchiveEntryWrapper>(
         args.This());
 
-    if (archive_entry_size(entry->entry_) > 0) {
-      ExtractRequest *req = new ExtractRequest;
-      req->archive_entry = entry;
-      req->error_string = NULL;
-      req->eof = false;
+    ExtractRequest *req = new ExtractRequest;
+    req->archive_entry = entry;
+    req->error_string = NULL;
+    req->eof = false;
 
-      BEGIN_ASYNC(req, NextChunkWork, NextChunkDone);
-      entry->Ref();
-    } else {
-      helpers::Emit(entry->handle_, "end", Undefined());
-    }
+    BEGIN_ASYNC(req, NextChunkWork, NextChunkDone);
+    entry->Ref();
 
     return scope.Close(Undefined());
   }

@@ -20,7 +20,7 @@ namespace nodearchive {
           archive_entry *entry);
 
     private:
-      ArchiveEntryWrapper(archive *archive, archive_entry *entry);
+      ArchiveEntryWrapper(archive *archive);
       ~ArchiveEntryWrapper();
 
       static v8::Handle<v8::Value> New(const v8::Arguments& args);
@@ -29,8 +29,7 @@ namespace nodearchive {
       static async_rtn NextChunkWork(uv_work_t *job);
       static async_rtn NextChunkDone(uv_work_t *job);
 
-      struct archive *archive_;
-      struct archive_entry *entry_;
+      archive *archive_;
       static v8::Persistent<v8::Function> constructor;
   };
 }
