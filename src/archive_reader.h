@@ -1,18 +1,18 @@
 // Copyright 2012 Karl Skomski MIT
 
-#ifndef ARCHIVE_READER_H__
-#define ARCHIVE_READER_H__
+#ifndef SRC_ARCHIVE_READER_H_
+#define SRC_ARCHIVE_READER_H_
 
-#include "archive_entry_wrapper.h"
+#include "./archive_entry_wrapper.h"
 #include <string>
 
 namespace nodearchive {
-  class ArchiveReaderWrapper : public node::ObjectWrap {
+  class ArchiveReader : public node::ObjectWrap {
     public:
       static void Init(v8::Handle<v8::Object> target);
     private:
-      ArchiveReaderWrapper(const char* filename);
-      ~ArchiveReaderWrapper();
+      explicit ArchiveReader(const char* filename);
+      ~ArchiveReader();
 
       static v8::Handle<v8::Value> New(const v8::Arguments& args);
 
@@ -30,4 +30,4 @@ namespace nodearchive {
   };
 }
 
-#endif
+#endif  // SRC_ARCHIVE_READER_H_

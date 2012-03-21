@@ -1,19 +1,24 @@
 // Copyright 2012 Karl Skomski MIT
 
-#ifndef ARCHIVE_ENTRY_H__
-#define ARCHIVE_ENTRY_H__
+#ifndef SRC_ARCHIVE_ENTRY_WRAPPER_H_
+#define SRC_ARCHIVE_ENTRY_WRAPPER_H_
 
-#include <node.h>
-#include "node_buffer.h"
 #include <archive.h>
 #include <archive_entry.h>
-#include "helpers.h"
+
+#include <node.h>
+#include "./node_buffer.h"
+
+#include "./helpers.h"
 
 namespace nodearchive {
   class ArchiveEntryWrapper : public node::ObjectWrap {
     public:
       static void Init(v8::Handle<v8::Object> target);
-      static v8::Handle<v8::Value> NewInstance(archive *archive, archive_entry *entry);
+      static v8::Handle<v8::Value> NewInstance(
+          archive *archive,
+          archive_entry *entry);
+
     private:
       ArchiveEntryWrapper(archive *archive, archive_entry *entry);
       ~ArchiveEntryWrapper();
@@ -30,4 +35,4 @@ namespace nodearchive {
   };
 }
 
-#endif
+#endif  // SRC_ARCHIVE_ENTRY_WRAPPER_H_

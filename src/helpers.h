@@ -1,5 +1,7 @@
-#ifndef ARCHIVE_HELPERS_H__
-#define ARCHIVE_HELPERS_H__
+// Copyright 2012 Karl Skomski MIT
+
+#ifndef SRC_HELPERS_H_
+#define SRC_HELPERS_H_
 
 #include <node.h>
 #include <node_version.h>
@@ -39,4 +41,5 @@ namespace helpers {
                     int argc,
                     v8::Handle<v8::Value> argv[]);
 }
-#endif
+
+#endif  // SRC_HELPERS_H_

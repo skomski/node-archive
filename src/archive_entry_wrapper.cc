@@ -1,6 +1,6 @@
 // Copyright 2012 Karl Skomski MIT
 
-#include "archive_entry_wrapper.h"
+#include "./archive_entry_wrapper.h"
 
 namespace nodearchive {
   using v8::Object;
@@ -22,10 +22,10 @@ namespace nodearchive {
   using v8::External;
   using v8::Date;
 
-  ArchiveEntryWrapper::ArchiveEntryWrapper(archive *archive, archive_entry *entry) :
+  ArchiveEntryWrapper::ArchiveEntryWrapper(
+      archive *archive, archive_entry *entry) :
     archive_(archive),
     entry_(entry) {
-
   }
 
   ArchiveEntryWrapper::~ArchiveEntryWrapper() {}
@@ -59,7 +59,8 @@ namespace nodearchive {
     return scope.Close(args.This());
   }
 
-  Handle<Value> ArchiveEntryWrapper::NewInstance(archive *archive, archive_entry *entry) {
+  Handle<Value> ArchiveEntryWrapper::NewInstance(
+      archive *archive, archive_entry *entry) {
     HandleScope scope;
 
     Local<Value> argv[2] = { External::New(archive), External::New(entry) };
@@ -151,14 +152,16 @@ namespace nodearchive {
     v8::HandleScope scope;
     ExtractRequest *req = static_cast<ExtractRequest*>(job->data);
 
-    if(req->eof == true) {
+    if (req->eof == true) {
       helpers::Emit(req->archive_entry->handle_, "end", Undefined());
     } else if (req->error_string != NULL) {
       helpers::EmitError(req->archive_entry->handle_, req->error_string);
     } else {
-       v8::Handle<v8::Object> buffer = node::Buffer::New(
-      (char*)req->output_data, req->output_length)->handle_;
-       helpers::Emit(req->archive_entry->handle_, "data", buffer);
+      char *data = static_cast<char*>(const_cast<void*>(req->output_data));
+      Handle<Object> buffer = node::Buffer::New(
+           data, req->output_length)->handle_;
+
+      helpers::Emit(req->archive_entry->handle_, "data", buffer);
     }
 
     req->archive_entry->Unref();
@@ -168,7 +171,8 @@ namespace nodearchive {
 
   Handle<Value> ArchiveEntryWrapper::NextChunk(const Arguments& args) {
     HandleScope scope;
-    ArchiveEntryWrapper* entry = ObjectWrap::Unwrap<ArchiveEntryWrapper>(args.This());
+    ArchiveEntryWrapper* entry = ObjectWrap::Unwrap<ArchiveEntryWrapper>(
+        args.This());
 
     if (archive_entry_size(entry->entry_) > 0) {
       ExtractRequest *req = new ExtractRequest;

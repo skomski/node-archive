@@ -1,6 +1,6 @@
 // Copyright 2012 Karl Skomski MIT
 
-#include "archive_reader_wrapper.h"
+#include "./archive_reader.h"
 
 namespace nodearchive {
   using v8::Object;
@@ -21,19 +21,19 @@ namespace nodearchive {
   using v8::Undefined;
   using v8::External;
 
-  ArchiveReaderWrapper::ArchiveReaderWrapper(const char* filename) {
+  ArchiveReader::ArchiveReader(const char* filename) {
     filename_ = filename;
 
     archive_ = archive_read_new();
     archive_read_support_filter_all(archive_);
     archive_read_support_format_all(archive_);
   }
-  ArchiveReaderWrapper::~ArchiveReaderWrapper() {
+  ArchiveReader::~ArchiveReader() {
   }
 
-  void ArchiveReaderWrapper::Init(Handle<Object> target) {
+  void ArchiveReader::Init(Handle<Object> target) {
     Local<FunctionTemplate> reader_template = FunctionTemplate::New(New);
-    reader_template->SetClassName(String::NewSymbol("ArchiveReaderWrapper"));
+    reader_template->SetClassName(String::NewSymbol("ArchiveReader"));
     reader_template->InstanceTemplate()->SetInternalFieldCount(1);
 
     reader_template->PrototypeTemplate()->Set(String::NewSymbol("open"),
@@ -47,17 +47,17 @@ namespace nodearchive {
     target->Set(String::NewSymbol("Reader"), constructor);
   }
 
-  Handle<Value> ArchiveReaderWrapper::New(const Arguments& args) {
+  Handle<Value> ArchiveReader::New(const Arguments& args) {
     HandleScope scope;
 
-    ArchiveReaderWrapper* reader = new ArchiveReaderWrapper(*v8::String::Utf8Value(args[0]));
+    ArchiveReader* reader = new ArchiveReader(*v8::String::Utf8Value(args[0]));
     reader->Wrap(args.This());
 
     return scope.Close(args.This());
   }
 
   struct OpenRequest {
-    ArchiveReaderWrapper* reader;
+    ArchiveReader* reader;
     const char* error_string;
     const char* compression_name;
     const char* format_name;
@@ -65,7 +65,7 @@ namespace nodearchive {
     v8::Persistent<v8::Function> callback;
   };
 
-  async_rtn ArchiveReaderWrapper::OpenWork(uv_work_t *job) {
+  async_rtn ArchiveReader::OpenWork(uv_work_t *job) {
     OpenRequest *req = static_cast<OpenRequest*>(job->data);
 
     int return_value = archive_read_open_filename(
@@ -84,7 +84,7 @@ namespace nodearchive {
     RETURN_ASYNC
   }
 
-  async_rtn ArchiveReaderWrapper::OpenDone(uv_work_t *job) {
+  async_rtn ArchiveReader::OpenDone(uv_work_t *job) {
     v8::HandleScope scope;
     OpenRequest *req = static_cast<OpenRequest*>(job->data);
 
@@ -113,9 +113,9 @@ namespace nodearchive {
     RETURN_ASYNC_AFTER
   }
 
-  Handle<Value> ArchiveReaderWrapper::Open(const Arguments& args) {
+  Handle<Value> ArchiveReader::Open(const Arguments& args) {
     HandleScope scope;
-    ArchiveReaderWrapper* reader = ObjectWrap::Unwrap<ArchiveReaderWrapper>(args.This());
+    ArchiveReader* reader = ObjectWrap::Unwrap<ArchiveReader>(args.This());
 
     OpenRequest *req = new OpenRequest;
     req->reader = reader;
@@ -130,13 +130,13 @@ namespace nodearchive {
   }
 
   struct NextEntryRequest {
-    ArchiveReaderWrapper* reader;
+    ArchiveReader* reader;
     struct archive_entry *entry;
     bool eof;
     const char* error_string;
   };
 
-  async_rtn ArchiveReaderWrapper::NextEntryWork(uv_work_t *job) {
+  async_rtn ArchiveReader::NextEntryWork(uv_work_t *job) {
     NextEntryRequest *req = static_cast<NextEntryRequest*>(job->data);
 
 
@@ -157,7 +157,7 @@ namespace nodearchive {
     RETURN_ASYNC
   }
 
-  async_rtn ArchiveReaderWrapper::NextEntryDone(uv_work_t *job) {
+  async_rtn ArchiveReader::NextEntryDone(uv_work_t *job) {
     v8::HandleScope scope;
     NextEntryRequest *req = static_cast<NextEntryRequest*>(job->data);
 
@@ -179,9 +179,9 @@ namespace nodearchive {
     RETURN_ASYNC_AFTER
   }
 
-  Handle<Value> ArchiveReaderWrapper::NextEntry(const Arguments& args) {
+  Handle<Value> ArchiveReader::NextEntry(const Arguments& args) {
     HandleScope scope;
-    ArchiveReaderWrapper* reader = ObjectWrap::Unwrap<ArchiveReaderWrapper>(args.This());
+    ArchiveReader* reader = ObjectWrap::Unwrap<ArchiveReader>(args.This());
 
     NextEntryRequest *req = new NextEntryRequest;
     req->reader = reader;
