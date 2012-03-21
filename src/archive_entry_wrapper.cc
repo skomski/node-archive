@@ -118,27 +118,24 @@ namespace nodearchive {
   }
 
   struct ExtractRequest {
-    ArchiveEntryWrapper *archive_entry;
+    ArchiveEntryWrapper *entry_wrapper;
     const char* error_string;
     const void* output_data;
     size_t output_length;
     off_t offset;
-    bool eof;
   };
 
   async_rtn ArchiveEntryWrapper::NextChunkWork(uv_work_t *job) {
     ExtractRequest *req = static_cast<ExtractRequest*>(job->data);
 
     int return_value = archive_read_data_block(
-        req->archive_entry->archive_,
+        req->entry_wrapper->archive_,
         &req->output_data,
         &req->output_length,
         &req->offset);
 
-    if (return_value == ARCHIVE_EOF) {
-      req->eof = true;
-    } else if (return_value != ARCHIVE_OK) {
-      req->error_string = archive_error_string(req->archive_entry->archive_);
+    if (return_value != ARCHIVE_EOF && return_value != ARCHIVE_OK) {
+      req->error_string = archive_error_string(req->entry_wrapper->archive_);
     }
 
     RETURN_ASYNC
@@ -148,19 +145,21 @@ namespace nodearchive {
     v8::HandleScope scope;
     ExtractRequest *req = static_cast<ExtractRequest*>(job->data);
 
-    if (req->eof == true) {
-      helpers::Emit(req->archive_entry->handle_, "end", Undefined());
-    } else if (req->error_string != NULL) {
-      helpers::EmitError(req->archive_entry->handle_, req->error_string);
+    if (req->error_string != NULL) {
+      helpers::EmitError(req->entry_wrapper->handle_, req->error_string);
     } else {
-      char *data = static_cast<char*>(const_cast<void*>(req->output_data));
-      Handle<Object> buffer = node::Buffer::New(
-           data, req->output_length)->handle_;
+      if (req->output_data == NULL) {
+        helpers::Emit(req->entry_wrapper->handle_, "end", Undefined());
+      } else {
+        char *data = static_cast<char*>(const_cast<void*>(req->output_data));
+        Handle<Object> buffer = node::Buffer::New(
+          data, req->output_length)->handle_;
 
-      helpers::Emit(req->archive_entry->handle_, "data", buffer);
+        helpers::Emit(req->entry_wrapper->handle_, "data", buffer);
+      }
     }
 
-    req->archive_entry->Unref();
+    req->entry_wrapper->Unref();
     delete req;
     RETURN_ASYNC_AFTER
   }
@@ -171,9 +170,9 @@ namespace nodearchive {
         args.This());
 
     ExtractRequest *req = new ExtractRequest;
-    req->archive_entry = entry;
-    req->error_string = NULL;
-    req->eof = false;
+    req->entry_wrapper = entry;
+    req->error_string  = NULL;
+    req->output_data   = NULL;
 
     BEGIN_ASYNC(req, NextChunkWork, NextChunkDone);
     entry->Ref();

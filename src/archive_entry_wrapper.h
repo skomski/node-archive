@@ -20,7 +20,7 @@ namespace nodearchive {
           archive_entry *entry);
 
     private:
-      ArchiveEntryWrapper(archive *archive);
+      explicit ArchiveEntryWrapper(archive *archive);
       ~ArchiveEntryWrapper();
 
       static v8::Handle<v8::Value> New(const v8::Arguments& args);
