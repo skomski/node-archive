@@ -11,7 +11,7 @@ namespace nodearchive {
     public:
       static void Init(v8::Handle<v8::Object> target);
     private:
-      explicit ArchiveReader(const char* filename);
+      explicit ArchiveReader(const char* filename, size_t blocksize);
       ~ArchiveReader();
 
       static v8::Handle<v8::Value> New(const v8::Arguments& args);
@@ -27,6 +27,7 @@ namespace nodearchive {
 
       archive *archive_;
       std::string filename_;
+      size_t blocksize_;
   };
 }
 

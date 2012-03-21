@@ -21,8 +21,9 @@ namespace nodearchive {
   using v8::Undefined;
   using v8::External;
 
-  ArchiveReader::ArchiveReader(const char* filename) {
-    filename_ = filename;
+  ArchiveReader::ArchiveReader(const char* filename, size_t blocksize) {
+    filename_   = std::string(filename);
+    blocksize_ = blocksize;
 
     archive_ = archive_read_new();
     archive_read_support_filter_all(archive_);
@@ -50,7 +51,10 @@ namespace nodearchive {
   Handle<Value> ArchiveReader::New(const Arguments& args) {
     HandleScope scope;
 
-    ArchiveReader* reader = new ArchiveReader(*v8::String::Utf8Value(args[0]));
+    ArchiveReader* reader = new ArchiveReader(
+        *String::Utf8Value(args[0]),
+        args[1]->ToInteger()->Value());
+
     reader->Wrap(args.This());
 
     return scope.Close(args.This());
@@ -69,7 +73,7 @@ namespace nodearchive {
     int return_value = archive_read_open_filename(
         req->reader->archive_,
         req->reader->filename_.c_str(),
-        10240);
+        req->reader->blocksize_);
 
     if (return_value != ARCHIVE_OK) {
       req->error_string = archive_error_string(req->reader->archive_);
