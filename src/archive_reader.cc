@@ -28,8 +28,8 @@ namespace nodearchive {
     archive_read_support_filter_all(archive_);
     archive_read_support_format_all(archive_);
   }
-  ArchiveReader::~ArchiveReader() {
-  }
+
+  ArchiveReader::~ArchiveReader() {}
 
   void ArchiveReader::Init(Handle<Object> target) {
     Local<FunctionTemplate> reader_template = FunctionTemplate::New(New);
@@ -60,8 +60,6 @@ namespace nodearchive {
     ArchiveReader* reader;
     const char* error_string;
     const char* compression_name;
-    const char* format_name;
-    int file_count;
     v8::Persistent<v8::Function> callback;
   };
 
@@ -77,8 +75,6 @@ namespace nodearchive {
       req->error_string = archive_error_string(req->reader->archive_);
     } else {
       req->compression_name = archive_compression_name(req->reader->archive_);
-      req->format_name = archive_format_name(req->reader->archive_);
-      req->file_count = archive_file_count(req->reader->archive_);
     }
 
     RETURN_ASYNC
@@ -130,15 +126,14 @@ namespace nodearchive {
   }
 
   struct NextEntryRequest {
-    ArchiveReader* reader;
-    struct archive_entry *entry;
+    ArchiveReader *reader;
+    archive_entry *entry;
     bool eof;
-    const char* error_string;
+    const char    *error_string;
   };
 
   async_rtn ArchiveReader::NextEntryWork(uv_work_t *job) {
     NextEntryRequest *req = static_cast<NextEntryRequest*>(job->data);
-
 
     int return_value = archive_read_next_header(
         req->reader->archive_,
@@ -146,12 +141,8 @@ namespace nodearchive {
 
     if (return_value == ARCHIVE_EOF) {
       req->eof = true;
-      RETURN_ASYNC
-    }
-
-    if (return_value != ARCHIVE_OK) {
+    } else if (return_value != ARCHIVE_OK) {
       req->error_string = archive_error_string(req->reader->archive_);
-      RETURN_ASYNC
     }
 
     RETURN_ASYNC
@@ -161,17 +152,19 @@ namespace nodearchive {
     v8::HandleScope scope;
     NextEntryRequest *req = static_cast<NextEntryRequest*>(job->data);
 
-    if (req->eof == true) {
-      helpers::Emit(req->reader->handle_, "end", Undefined());
-      archive_read_close(req->reader->archive_);
-      archive_read_free(req->reader->archive_);
-    } else if (req->error_string != NULL) {
+    if (req->error_string != NULL) {
       helpers::EmitError(req->reader->handle_, req->error_string);
     } else {
-      Handle<Value> entry = ArchiveEntryWrapper::NewInstance(
+      if (req->eof == true) {
+        helpers::Emit(req->reader->handle_, "end", Undefined());
+        archive_read_close(req->reader->archive_);
+        archive_read_free(req->reader->archive_);
+      } else {
+        Handle<Value> entry_wrapper = ArchiveEntryWrapper::NewInstance(
           req->reader->archive_,
           req->entry);
-      helpers::Emit(req->reader->handle_, "entry", entry);
+        helpers::Emit(req->reader->handle_, "entry", entry_wrapper);
+      }
     }
 
     req->reader->Unref();
@@ -185,8 +178,9 @@ namespace nodearchive {
 
     NextEntryRequest *req = new NextEntryRequest;
     req->reader = reader;
-    req->eof    = false;
     req->error_string = NULL;
+    req->entry = NULL;
+    req->eof = false;
 
     BEGIN_ASYNC(req, NextEntryWork, NextEntryDone);
     reader->Ref();
