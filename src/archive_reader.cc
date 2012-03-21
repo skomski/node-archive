@@ -117,7 +117,7 @@ namespace nodearchive {
     HandleScope scope;
     ArchiveReader* reader = ObjectWrap::Unwrap<ArchiveReader>(args.This());
 
-    OpenRequest *req = new OpenRequest;
+    OpenRequest *req = new OpenRequest();
     req->reader = reader;
     req->error_string = NULL;
     req->callback = Persistent<Function>::New(
@@ -180,7 +180,7 @@ namespace nodearchive {
     HandleScope scope;
     ArchiveReader* reader = ObjectWrap::Unwrap<ArchiveReader>(args.This());
 
-    NextEntryRequest *req = new NextEntryRequest;
+    NextEntryRequest *req = new NextEntryRequest();
     req->reader = reader;
     req->error_string = NULL;
     req->entry = NULL;
