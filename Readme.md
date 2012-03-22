@@ -27,7 +27,7 @@ npm install archive
 var Archive = require('archive');
 
 var archive = new Archive.Reader({
-  path: 'snappy.tar.gz' // specify source path
+  path: __dirname + '/snappy.tar.gz' // specify source path
 });
 
 archive.on('directory', function(directory) {
