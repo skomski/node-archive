@@ -26,17 +26,17 @@ npm install archive
 
 var Archive = require('archive');
 
-var archive = new Archive.Reader({
+var reader = new Archive.Reader({
   path: __dirname + '/snappy.tar.gz' // specify source path
 });
 
-archive.on('directory', function(directory) {
+reader.on('directory', function(directory) {
   console.log(directory.path);
   reader.nextEntry();
 });
 
-archive.on('file', function(file) {
-  console.log(entry.path, entry.mtime);
+reader.on('file', function(file) {
+  console.log(file.path, file.mtime);
   
   file.on('error', function(err) {
     console.error(err);
@@ -44,7 +44,7 @@ archive.on('file', function(file) {
 
   file.on('data', function(buffer) {
     console.log(buffer.toString());
-    file.nextChunk(); // get next chunk
+    reader.nextChunk(); // get next chunk
   });
 
   file.on('end', function() {
@@ -52,20 +52,20 @@ archive.on('file', function(file) {
     reader.nextEntry(); // get next entry
   });
   
-  file.nextChunk(); // get first chunk
+  reader.nextChunk(); // get first chunk
 });
 
-archive.on('error', function(err) { // archive error
+reader.on('error', function(err) { // archive error
   console.error(err);
 });
 
-archive.on('end', function() {
+reader.on('end', function() {
   console.log('archive end');
 });
 
-archive.open(function(info) { // open archive
+reader.open(function(info) { // open archive
   console.log(info.compression);
-  archive.nextEntry();  // get first entry
+  reader.nextEntry();  // get first entry
 });
 ```
 
