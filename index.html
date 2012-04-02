@@ -1,0 +1,122 @@
+<!DOCTYPE html>
+<html>
+
+  <head>
+    <meta charset='utf-8' />
+    <meta http-equiv="X-UA-Compatible" content="chrome=1" />
+    <meta name="description" content="node-archive : node.js bindings for libarchive" />
+
+    <link rel="stylesheet" type="text/css" media="screen" href="stylesheets/stylesheet.css">
+
+    <title>node-archive</title>
+  </head>
+
+  <body>
+
+    <!-- HEADER -->
+    <div id="header_wrap" class="outer">
+        <header class="inner">
+          <a id="forkme_banner" href="https://github.com/Skomski/node-archive">Fork Me on GitHub</a>
+
+          <h1 id="project_title">node-archive</h1>
+          <h2 id="project_tagline">node.js bindings for libarchive</h2>
+
+          <section id="downloads">
+            <a class="zip_download_link" href="https://github.com/Skomski/node-archive/zipball/master">Download this project as a .zip file</a>
+            <a class="tar_download_link" href="https://github.com/Skomski/node-archive/tarball/master">Download this project as a tar.gz file</a>
+          </section>
+        </header>
+    </div>
+
+    <!-- MAIN CONTENT -->
+    <div id="main_content_wrap" class="outer">
+      <section id="main_content" class="inner">
+        <h2>Dependencies</h2>
+
+<pre><code>libarchive
+<a href="http://libarchive.github.com/">http://libarchive.github.com/</a>
+&gt;= 3.0.3
+</code></pre>
+
+<h2>Install</h2>
+
+<pre><code>npm install archive
+</code></pre>
+
+<h2>Reader</h2>
+
+<div class="highlight">
+<pre>
+<span class="kd">var</span> <span class="nx">Archive</span> <span class="o">=</span> <span class="nx">require</span><span class="p">(</span><span class="s1">'archive'</span><span class="p">);</span>
+
+<span class="kd">var</span> <span class="nx">reader</span> <span class="o">=</span> <span class="k">new</span> <span class="nx">Archive</span><span class="p">.</span><span class="nx">Reader</span><span class="p">({</span>
+  <span class="nx">path</span><span class="o">:</span> <span class="nx">__dirname</span> <span class="o">+</span> <span class="s1">'/snappy.tar.gz'</span> <span class="c1">// specify source path</span>
+<span class="p">});</span>
+
+<span class="nx">reader</span><span class="p">.</span><span class="nx">on</span><span class="p">(</span><span class="s1">'directory'</span><span class="p">,</span> <span class="kd">function</span><span class="p">(</span><span class="nx">directory</span><span class="p">)</span> <span class="p">{</span>
+  <span class="nx">console</span><span class="p">.</span><span class="nx">log</span><span class="p">(</span><span class="nx">directory</span><span class="p">.</span><span class="nx">path</span><span class="p">);</span>
+  <span class="nx">reader</span><span class="p">.</span><span class="nx">nextEntry</span><span class="p">();</span>
+<span class="p">});</span>
+
+<span class="nx">reader</span><span class="p">.</span><span class="nx">on</span><span class="p">(</span><span class="s1">'file'</span><span class="p">,</span> <span class="kd">function</span><span class="p">(</span><span class="nx">file</span><span class="p">)</span> <span class="p">{</span>
+  <span class="nx">console</span><span class="p">.</span><span class="nx">log</span><span class="p">(</span><span class="nx">file</span><span class="p">.</span><span class="nx">path</span><span class="p">,</span> <span class="nx">file</span><span class="p">.</span><span class="nx">mtime</span><span class="p">);</span>
+
+  <span class="nx">file</span><span class="p">.</span><span class="nx">on</span><span class="p">(</span><span class="s1">'error'</span><span class="p">,</span> <span class="kd">function</span><span class="p">(</span><span class="nx">err</span><span class="p">)</span> <span class="p">{</span>
+    <span class="nx">console</span><span class="p">.</span><span class="nx">error</span><span class="p">(</span><span class="nx">err</span><span class="p">);</span>
+  <span class="p">});</span>
+
+  <span class="nx">file</span><span class="p">.</span><span class="nx">on</span><span class="p">(</span><span class="s1">'data'</span><span class="p">,</span> <span class="kd">function</span><span class="p">(</span><span class="nx">buffer</span><span class="p">)</span> <span class="p">{</span>
+    <span class="nx">console</span><span class="p">.</span><span class="nx">log</span><span class="p">(</span><span class="nx">buffer</span><span class="p">.</span><span class="nx">toString</span><span class="p">());</span>
+    <span class="nx">reader</span><span class="p">.</span><span class="nx">nextChunk</span><span class="p">();</span> <span class="c1">// get next chunk</span>
+  <span class="p">});</span>
+
+  <span class="nx">file</span><span class="p">.</span><span class="nx">on</span><span class="p">(</span><span class="s1">'end'</span><span class="p">,</span> <span class="kd">function</span><span class="p">()</span> <span class="p">{</span>
+    <span class="nx">console</span><span class="p">.</span><span class="nx">log</span><span class="p">(</span><span class="s1">'file end'</span><span class="p">);</span>
+    <span class="nx">reader</span><span class="p">.</span><span class="nx">nextEntry</span><span class="p">();</span> <span class="c1">// get next entry</span>
+  <span class="p">});</span>
+
+  <span class="nx">reader</span><span class="p">.</span><span class="nx">nextChunk</span><span class="p">();</span> <span class="c1">// get first chunk</span>
+<span class="p">});</span>
+
+<span class="nx">reader</span><span class="p">.</span><span class="nx">on</span><span class="p">(</span><span class="s1">'error'</span><span class="p">,</span> <span class="kd">function</span><span class="p">(</span><span class="nx">err</span><span class="p">)</span> <span class="p">{</span> <span class="c1">// archive error</span>
+  <span class="nx">console</span><span class="p">.</span><span class="nx">error</span><span class="p">(</span><span class="nx">err</span><span class="p">);</span>
+<span class="p">});</span>
+
+<span class="nx">reader</span><span class="p">.</span><span class="nx">on</span><span class="p">(</span><span class="s1">'end'</span><span class="p">,</span> <span class="kd">function</span><span class="p">()</span> <span class="p">{</span>
+  <span class="nx">console</span><span class="p">.</span><span class="nx">log</span><span class="p">(</span><span class="s1">'archive end'</span><span class="p">);</span>
+<span class="p">});</span>
+
+<span class="nx">reader</span><span class="p">.</span><span class="nx">open</span><span class="p">(</span><span class="kd">function</span><span class="p">(</span><span class="nx">info</span><span class="p">)</span> <span class="p">{</span> <span class="c1">// open archive</span>
+  <span class="nx">console</span><span class="p">.</span><span class="nx">log</span><span class="p">(</span><span class="nx">info</span><span class="p">.</span><span class="nx">compression</span><span class="p">);</span>
+  <span class="nx">reader</span><span class="p">.</span><span class="nx">nextEntry</span><span class="p">();</span>  <span class="c1">// get first entry</span>
+<span class="p">});</span>
+</pre>
+</div>
+
+
+<h2>License</h2>
+
+<p>This is free and unencumbered software released into the public domain.</p>
+
+<p>Anyone is free to copy, modify, publish, use, compile, sell, or distribute this software, either in source code form or as a compiled binary, for any purpose, commercial or non-commercial, and by any means.</p>
+
+<p>In jurisdictions that recognize copyright laws, the author or authors of this software dedicate any and all copyright interest in the software to the public domain. We make this dedication for the benefit of the public at large and to the detriment of our heirs and successors. We intend this dedication to be an overt act of relinquishment in perpetuity of all present and future rights to this software under copyright law.</p>
+
+<p>THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.</p>
+
+<p>For more information, please refer to <a href="http://unlicense.org/">http://unlicense.org/</a></p>
+      </section>
+    </div>
+
+    <!-- FOOTER  -->
+    <div id="footer_wrap" class="outer">
+      <footer class="inner">
+        <p class="copyright">node-archive maintained by <a href="https://github.com/Skomski">Skomski</a></p>
+        <p>Published with <a href="http://pages.github.com">GitHub Pages</a></p>
+      </footer>
+    </div>
+
+    
+
+  </body>
+</html>
