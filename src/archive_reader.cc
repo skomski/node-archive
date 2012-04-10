@@ -1,6 +1,6 @@
 // Copyright 2012 Karl Skomski MIT
 
-#include "./archive_reader.h"
+#include "archive_reader.h"
 
 namespace nodearchive {
   using v8::Object;

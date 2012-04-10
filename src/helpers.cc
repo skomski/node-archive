@@ -1,6 +1,6 @@
 // Copyright 2012 Karl Skomski MIT
 
-#include "./helpers.h"
+#include "helpers.h"
 
 namespace helpers {
   using v8::Object;

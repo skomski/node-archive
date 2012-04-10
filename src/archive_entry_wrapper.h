@@ -7,9 +7,9 @@
 #include <archive_entry.h>
 
 #include <node.h>
-#include "./node_buffer.h"
+#include "node_buffer.h"
 
-#include "./helpers.h"
+#include "helpers.h"
 
 namespace nodearchive {
   class ArchiveEntryWrapper : public node::ObjectWrap {

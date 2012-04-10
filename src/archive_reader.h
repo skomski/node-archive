@@ -3,7 +3,7 @@
 #ifndef SRC_ARCHIVE_READER_H_
 #define SRC_ARCHIVE_READER_H_
 
-#include "./archive_entry_wrapper.h"
+#include "archive_entry_wrapper.h"
 #include <string>
 
 namespace nodearchive {

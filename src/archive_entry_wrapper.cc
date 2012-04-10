@@ -1,6 +1,6 @@
 // Copyright 2012 Karl Skomski MIT
 
-#include "./archive_entry_wrapper.h"
+#include "archive_entry_wrapper.h"
 
 namespace nodearchive {
   using v8::Object;
