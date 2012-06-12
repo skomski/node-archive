@@ -25,3 +25,4 @@ def build(bld):
     'src/addon.cc'
   ]
   obj.env.append_value('LINKFLAGS','-larchive')
+  obj.uselib = "ARCHIVE"
